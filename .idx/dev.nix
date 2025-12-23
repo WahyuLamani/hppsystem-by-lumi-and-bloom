@@ -5,6 +5,7 @@
   channel = "stable-23.11"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
   packages = [
+    pkgs.openssl.dev
     pkgs.nodejs_20
     pkgs.yarn
     pkgs.nodePackages.pnpm
