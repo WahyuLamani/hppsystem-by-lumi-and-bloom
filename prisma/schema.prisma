@@ -1,0 +1,456 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================
+// MASTER DATA
+// =============================================
+
+model Supplier {
+  id        String   @id @default(cuid())
+  kode      String   @unique
+  nama      String
+  kontak    String?
+  alamat    String?
+  email     String?
+  status    StatusAktif @default(active)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  bahanBaku  BahanBaku[]
+  pembelian  TransaksiPembelian[]
+
+  @@map("suppliers")
+}
+
+model BahanBaku {
+  id           String   @id @default(cuid())
+  kode         String   @unique
+  nama         String
+  kategori     String
+  satuan       String
+  hargaBeli    Decimal  @default(0) @map("harga_beli") @db.Decimal(15, 2)
+  stok         Decimal  @default(0) @db.Decimal(15, 3)
+  stokMinimum  Decimal  @default(0) @map("stok_minimum") @db.Decimal(15, 3)
+  supplierId   String?  @map("supplier_id")
+  status       StatusAktif @default(active)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  supplier         Supplier? @relation(fields: [supplierId], references: [id])
+  resepDetail      ResepDetail[]
+  pembelianDetail  PembelianDetail[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@map("bahan_baku")
+}
+
+model Produk {
+  id                  String   @id @default(cuid())
+  kode                String   @unique
+  nama                String
+  kategori            String
+  deskripsi           String?
+  hpp                 Decimal  @default(0) @db.Decimal(15, 2)
+  hargaJual           Decimal  @default(0) @map("harga_jual") @db.Decimal(15, 2)
+  marginPersen        Decimal  @default(0) @map("margin_persen") @db.Decimal(5, 2)
+  marginRupiah        Decimal  @default(0) @map("margin_rupiah") @db.Decimal(15, 2)
+  stok                Decimal  @default(0) @db.Decimal(15, 3)
+  stokMinimum         Decimal  @default(0) @map("stok_minimum") @db.Decimal(15, 3)
+  dapatPreOrder       Boolean  @default(true) @map("dapat_pre_order")
+  waktuProduksiHari   Int?     @map("waktu_produksi_hari")
+  status              StatusAktif @default(active)
+  gambarUrl           String?  @map("gambar_url")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  resep              Resep[]
+  produksi           TransaksiProduksi[]
+  penjualanDetail    PenjualanDetail[]
+  preOrderDetail     PreOrderDetail[]
+
+  @@index([status])
+  @@map("produk")
+}
+
+// =============================================
+// RESEP
+// =============================================
+
+model Resep {
+  id           String   @id @default(cuid())
+  produkId     String   @map("produk_id")
+  namaResep    String   @map("nama_resep")
+  porsiHasil   Decimal  @map("porsi_hasil") @db.Decimal(15, 3)
+  satuanHasil  String   @map("satuan_hasil")
+  catatan      String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  produk       Produk   @relation(fields: [produkId], references: [id], onDelete: Cascade)
+  resepDetail  ResepDetail[]
+  produksi     TransaksiProduksi[]
+
+  @@index([produkId])
+  @@index([isActive])
+  @@map("resep")
+}
+
+model ResepDetail {
+  id           String   @id @default(cuid())
+  resepId      String   @map("resep_id")
+  bahanBakuId  String   @map("bahan_baku_id")
+  qty          Decimal  @db.Decimal(15, 3)
+  satuan       String
+  catatan      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  resep        Resep     @relation(fields: [resepId], references: [id], onDelete: Cascade)
+  bahanBaku    BahanBaku @relation(fields: [bahanBakuId], references: [id], onDelete: Restrict)
+
+  @@index([resepId])
+  @@index([bahanBakuId])
+  @@map("resep_detail")
+}
+
+// =============================================
+// PEMBELIAN
+// =============================================
+
+model TransaksiPembelian {
+  id             String   @id @default(cuid())
+  nomorPo        String   @unique @map("nomor_po")
+  tanggal        DateTime @db.Date
+  supplierId     String   @map("supplier_id")
+  subtotal       Decimal  @default(0) @db.Decimal(15, 2)
+  diskon         Decimal  @default(0) @db.Decimal(15, 2)
+  pajak          Decimal  @default(0) @db.Decimal(15, 2)
+  ongkir         Decimal  @default(0) @db.Decimal(15, 2)
+  total          Decimal  @default(0) @db.Decimal(15, 2)
+  status         StatusPembelian @default(draft)
+  tanggalTerima  DateTime? @map("tanggal_terima") @db.Date
+  catatan        String?
+  createdBy      String   @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  detail         PembelianDetail[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([tanggal])
+  @@map("transaksi_pembelian")
+}
+
+model PembelianDetail {
+  id            String   @id @default(cuid())
+  pembelianId   String   @map("pembelian_id")
+  bahanBakuId   String   @map("bahan_baku_id")
+  qty           Decimal  @db.Decimal(15, 3)
+  satuan        String
+  hargaSatuan   Decimal  @map("harga_satuan") @db.Decimal(15, 2)
+  subtotal      Decimal  @db.Decimal(15, 2)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pembelian     TransaksiPembelian @relation(fields: [pembelianId], references: [id], onDelete: Cascade)
+  bahanBaku     BahanBaku @relation(fields: [bahanBakuId], references: [id], onDelete: Restrict)
+
+  @@index([pembelianId])
+  @@index([bahanBakuId])
+  @@map("pembelian_detail")
+}
+
+// =============================================
+// PRODUKSI
+// =============================================
+
+model TransaksiProduksi {
+  id              String   @id @default(cuid())
+  nomorProduksi   String   @unique @map("nomor_produksi")
+  tanggal         DateTime @db.Date
+  resepId         String   @map("resep_id")
+  produkId        String   @map("produk_id")
+  qtyBatch        Decimal  @map("qty_batch") @db.Decimal(15, 3)
+  qtyHasil        Decimal  @map("qty_hasil") @db.Decimal(15, 3)
+  totalHpp        Decimal  @map("total_hpp") @db.Decimal(15, 2)
+  hppPerUnit      Decimal  @map("hpp_per_unit") @db.Decimal(15, 2)
+  status          StatusProduksi @default(draft)
+  tanggalSelesai  DateTime? @map("tanggal_selesai") @db.Date
+  preOrderId      String?  @map("pre_order_id")
+  catatan         String?
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  resep           Resep    @relation(fields: [resepId], references: [id], onDelete: Restrict)
+  produk          Produk   @relation(fields: [produkId], references: [id], onDelete: Restrict)
+  preOrder        PreOrder? @relation(fields: [preOrderId], references: [id], onDelete: SetNull)
+
+  @@index([resepId])
+  @@index([produkId])
+  @@index([preOrderId])
+  @@index([status])
+  @@index([tanggal])
+  @@map("transaksi_produksi")
+}
+
+// =============================================
+// PRE ORDER
+// =============================================
+
+model PreOrder {
+  id                String   @id @default(cuid())
+  nomorPo           String   @unique @map("nomor_po")
+  tanggalOrder      DateTime @map("tanggal_order") @db.Date
+  tanggalDibutuhkan DateTime @map("tanggal_dibutuhkan") @db.Date
+  customerNama      String   @map("customer_nama")
+  customerKontak    String   @map("customer_kontak")
+  customerAlamat    String?  @map("customer_alamat")
+  subtotal          Decimal  @default(0) @db.Decimal(15, 2)
+  diskon            Decimal  @default(0) @db.Decimal(15, 2)
+  pajak             Decimal  @default(0) @db.Decimal(15, 2)
+  total             Decimal  @default(0) @db.Decimal(15, 2)
+  dp                Decimal  @default(0) @db.Decimal(15, 2)
+  sisaBayar         Decimal  @default(0) @map("sisa_bayar") @db.Decimal(15, 2)
+  totalHpp          Decimal  @default(0) @map("total_hpp") @db.Decimal(15, 2)
+  totalProfit       Decimal  @default(0) @map("total_profit") @db.Decimal(15, 2)
+  status            StatusPreOrder @default(pending)
+  catatan           String?
+  createdBy         String   @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  detail            PreOrderDetail[]
+  produksi          TransaksiProduksi[]
+  penjualan         TransaksiPenjualan[]
+
+  @@index([status])
+  @@index([tanggalOrder])
+  @@index([tanggalDibutuhkan])
+  @@map("pre_order")
+}
+
+model PreOrderDetail {
+  id            String   @id @default(cuid())
+  preOrderId    String   @map("pre_order_id")
+  produkId      String   @map("produk_id")
+  qty           Decimal  @db.Decimal(15, 3)
+  satuan        String
+  hargaSatuan   Decimal  @map("harga_satuan") @db.Decimal(15, 2)
+  hppSatuan     Decimal  @map("hpp_satuan") @db.Decimal(15, 2)
+  subtotal      Decimal  @db.Decimal(15, 2)
+  subtotalHpp   Decimal  @map("subtotal_hpp") @db.Decimal(15, 2)
+  profit        Decimal  @db.Decimal(15, 2)
+  catatan       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  preOrder      PreOrder @relation(fields: [preOrderId], references: [id], onDelete: Cascade)
+  produk        Produk   @relation(fields: [produkId], references: [id], onDelete: Restrict)
+
+  @@index([preOrderId])
+  @@index([produkId])
+  @@map("pre_order_detail")
+}
+
+// =============================================
+// PENJUALAN
+// =============================================
+
+model TransaksiPenjualan {
+  id             String   @id @default(cuid())
+  nomorInvoice   String   @unique @map("nomor_invoice")
+  tanggal        DateTime @db.Date
+  tipe           TipePenjualan @default(regular)
+  preOrderId     String?  @map("pre_order_id")
+  customerNama   String?  @map("customer_nama")
+  customerKontak String?  @map("customer_kontak")
+  subtotal       Decimal  @default(0) @db.Decimal(15, 2)
+  diskon         Decimal  @default(0) @db.Decimal(15, 2)
+  pajak          Decimal  @default(0) @db.Decimal(15, 2)
+  total          Decimal  @default(0) @db.Decimal(15, 2)
+  totalHpp       Decimal  @default(0) @map("total_hpp") @db.Decimal(15, 2)
+  totalProfit    Decimal  @default(0) @map("total_profit") @db.Decimal(15, 2)
+  metodeBayar    MetodeBayar @map("metode_bayar")
+  status         StatusPenjualan @default(draft)
+  catatan        String?
+  createdBy      String   @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  preOrder       PreOrder? @relation(fields: [preOrderId], references: [id], onDelete: SetNull)
+  detail         PenjualanDetail[]
+
+  @@index([preOrderId])
+  @@index([status])
+  @@index([tanggal])
+  @@map("transaksi_penjualan")
+}
+
+model PenjualanDetail {
+  id            String   @id @default(cuid())
+  penjualanId   String   @map("penjualan_id")
+  produkId      String   @map("produk_id")
+  qty           Decimal  @db.Decimal(15, 3)
+  satuan        String
+  hargaSatuan   Decimal  @map("harga_satuan") @db.Decimal(15, 2)
+  hppSatuan     Decimal  @map("hpp_satuan") @db.Decimal(15, 2)
+  subtotal      Decimal  @db.Decimal(15, 2)
+  subtotalHpp   Decimal  @map("subtotal_hpp") @db.Decimal(15, 2)
+  profit        Decimal  @db.Decimal(15, 2)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  penjualan     TransaksiPenjualan @relation(fields: [penjualanId], references: [id], onDelete: Cascade)
+  produk        Produk   @relation(fields: [produkId], references: [id], onDelete: Restrict)
+
+  @@index([penjualanId])
+  @@index([produkId])
+  @@map("penjualan_detail")
+}
+
+// =============================================
+// STOK MANAGEMENT
+// =============================================
+
+model StokAdjustment {
+  id                String   @id @default(cuid())
+  nomorAdjustment   String   @unique @map("nomor_adjustment")
+  tanggal           DateTime @db.Date
+  tipeItem          TipeItem @map("tipe_item")
+  itemId            String   @map("item_id")
+  itemNama          String   @map("item_nama")
+  adjustmentType    AdjustmentType @map("adjustment_type")
+  qtyBefore         Decimal  @map("qty_before") @db.Decimal(15, 3)
+  qtyAdjustment     Decimal  @map("qty_adjustment") @db.Decimal(15, 3)
+  qtyAfter          Decimal  @map("qty_after") @db.Decimal(15, 3)
+  nilaiHpp          Decimal  @map("nilai_hpp") @db.Decimal(15, 2)
+  alasan            String
+  catatan           String?
+  createdBy         String   @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([tipeItem, itemId])
+  @@index([adjustmentType])
+  @@index([tanggal])
+  @@map("stok_adjustment")
+}
+
+model StokMovement {
+  id              String   @id @default(cuid())
+  tanggal         DateTime @default(now())
+  tipeItem        TipeItem @map("tipe_item")
+  itemId          String   @map("item_id")
+  itemNama        String   @map("item_nama")
+  movementType    MovementType @map("movement_type")
+  qty             Decimal  @db.Decimal(15, 3)
+  stokBefore      Decimal  @map("stok_before") @db.Decimal(15, 3)
+  stokAfter       Decimal  @map("stok_after") @db.Decimal(15, 3)
+  transaksiType   String   @map("transaksi_type")
+  transaksiId     String?  @map("transaksi_id")
+  transaksiNomor  String?  @map("transaksi_nomor")
+  keterangan      String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([tipeItem, itemId])
+  @@index([transaksiType, transaksiId])
+  @@index([tanggal])
+  @@map("stok_movement")
+}
+
+// =============================================
+// ENUMS
+// =============================================
+
+enum StatusAktif {
+  active
+  inactive
+}
+
+enum StatusPembelian {
+  draft
+  submitted
+  received
+  cancelled
+}
+
+enum StatusProduksi {
+  draft
+  processing
+  completed
+  cancelled
+}
+
+enum StatusPreOrder {
+  pending
+  confirmed
+  production
+  ready
+  completed
+  cancelled
+}
+
+enum StatusPenjualan {
+  draft
+  paid
+  cancelled
+}
+
+enum TipePenjualan {
+  regular
+  pre_order
+}
+
+enum MetodeBayar {
+  cash
+  transfer
+  qris
+  debit
+  credit
+}
+
+enum TipeItem {
+  bahan_baku
+  produk_jadi
+}
+
+enum AdjustmentType {
+  waste      // Terbuang/gagal produksi
+  damaged    // Rusak/pecah
+  expired    // Kadaluarsa
+  found      // Ketemu stok tidak tercatat
+  correction // Koreksi salah input
+}
+
+enum MovementType {
+  in
+  out
+}
