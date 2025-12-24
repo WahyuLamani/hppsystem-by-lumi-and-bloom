@@ -16,8 +16,14 @@ import {
   BookOpen,
   Settings,
   ChevronDown,
+  X,
 } from "lucide-react"
 import { useState } from "react"
+
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
 
 interface NavItem {
   title: string
@@ -74,7 +80,7 @@ const navItems: NavItem[] = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const [openMenus, setOpenMenus] = useState<string[]>(["Master Data"])
 
@@ -87,13 +93,40 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <>
+      {/* Overlay untuk mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed lg:static inset-y-0 left-0 z-50",
+          "w-64 bg-white border-r border-gray-200 flex flex-col",
+          "transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
       {/* Logo / Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-200">
-        <UtensilsCrossed className="h-6 w-6 text-blue-600" />
-        <span className="ml-3 text-lg font-semibold text-gray-900">
-          Sistem HPP
-        </span>
+      <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
+        <div className="flex items-center">
+          <UtensilsCrossed className="h-6 w-6 text-blue-600" />
+          <span className="ml-3 text-lg font-semibold text-gray-900">
+            Sistem HPP
+          </span>
+        </div>
+        
+        {/* Close button - hanya muncul di mobile */}
+        <button
+          onClick={onClose}
+          className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+        >
+          <X className="h-5 w-5 text-gray-600" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -130,6 +163,7 @@ export function Sidebar() {
                         <li key={child.href}>
                           <Link
                             href={child.href}
+                            onClick={() => onClose()} // Close sidebar saat link diklik di mobile
                             className={cn(
                               "block px-3 py-2 text-sm rounded-lg transition-colors",
                               pathname === child.href
@@ -148,6 +182,7 @@ export function Sidebar() {
                 // Menu tanpa submenu
                 <Link
                   href={item.href!}
+                  onClick={() => onClose()} // Close sidebar saat link diklik di mobile
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                     pathname === item.href
@@ -175,5 +210,6 @@ export function Sidebar() {
         </Link>
       </div>
     </aside>
+    </>
   )
 }
