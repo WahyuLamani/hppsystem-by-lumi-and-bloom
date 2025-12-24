@@ -3,7 +3,7 @@ import { Plus } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SupplierTable } from "@/components/tables/supplier-table"
+import { SupplierTableServer } from "@/components/tables/supplier-table-server"
 import { SupplierTableSkeleton } from "@/components/tables/supplier-table-skeleton"
 
 export default function SupplierPage() {
@@ -32,7 +32,7 @@ export default function SupplierPage() {
         </CardHeader>
         <CardContent>
           <Suspense fallback={<SupplierTableSkeleton />}>
-            <SupplierTable />
+            <SupplierTableServer />
           </Suspense>
         </CardContent>
       </Card>
