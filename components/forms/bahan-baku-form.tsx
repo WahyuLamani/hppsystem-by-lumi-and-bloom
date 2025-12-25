@@ -229,14 +229,14 @@ export function BahanBakuForm({ bahanBaku, defaultKode, suppliers }: BahanBakuFo
         <div className="space-y-2">
           <Label htmlFor="supplierId">Supplier</Label>
           <Select
-            value={supplierId}
-            onValueChange={(value) => setValue("supplierId", value)}
+            value={supplierId || "none"}
+            onValueChange={(value) => setValue("supplierId", value === "none" ? "" : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Pilih supplier (opsional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tidak ada</SelectItem>
+              <SelectItem value="none">Tidak ada</SelectItem>
               {suppliers.map((supplier) => (
                 <SelectItem key={supplier.id} value={supplier.id}>
                   {supplier.nama}

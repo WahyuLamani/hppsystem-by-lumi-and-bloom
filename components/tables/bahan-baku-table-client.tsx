@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-// import { DeleteBahanBakuDialog } from "@/components/dialogs/delete-bahan-baku-dialog"
+import { DeleteBahanBakuDialog } from "@/components/dialogs/delete-bahan-baku-dialog"
 import { formatCurrency, formatNumber } from "@/lib/format"
 import type { BahanBaku, Supplier } from "@prisma/client"
 
@@ -154,11 +154,11 @@ export function BahanBakuTableClient({ bahanBaku }: BahanBakuTableClientProps) {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      {/* <DeleteBahanBakuDialog
+      <DeleteBahanBakuDialog
         bahanBaku={selectedBahan}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-      /> */}
+      />
     </>
   )
 }
