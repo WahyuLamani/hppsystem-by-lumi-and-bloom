@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { supplierSchema, type SupplierFormValues } from "@/lib/validations/supplier"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { generateCode } from "@/lib/format"
 import { z } from "zod"
 
@@ -10,6 +10,7 @@ import { z } from "zod"
  * Get all suppliers
  */
 export async function getSuppliers() {
+  noStore();
   try {
     const suppliers = await prisma.supplier.findMany({
       orderBy: { createdAt: "desc" },
@@ -25,6 +26,7 @@ export async function getSuppliers() {
  * Get supplier by ID
  */
 export async function getSupplierById(id: string) {
+  noStore();
   try {
     const supplier = await prisma.supplier.findUnique({
       where: { id },
