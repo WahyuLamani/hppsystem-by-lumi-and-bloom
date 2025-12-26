@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button"
 import { PembelianForm } from "@/components/forms/pembelian-form"
 import { generatePembelianCode } from "@/app/actions/pembelian"
 import { prisma } from "@/lib/prisma"
+import { unstable_noStore as noStore } from "next/cache"
 
 export default async function TambahPembelianPage() {
+  noStore();
   const nomorPo = await generatePembelianCode()
 
   // Get suppliers
