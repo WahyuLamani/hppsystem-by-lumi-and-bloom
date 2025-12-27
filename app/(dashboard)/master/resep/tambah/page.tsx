@@ -3,6 +3,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ResepForm } from "@/components/forms/resep-form"
 import { prisma } from "@/lib/prisma"
+import { getProdukActive } from "@/app/actions/produk"
+import { getBahanBakuActive } from "@/app/actions/bahan-baku"
 
 interface TambahResepPageProps {
   searchParams: {
@@ -12,28 +14,10 @@ interface TambahResepPageProps {
 
 export default async function TambahResepPage({ searchParams }: TambahResepPageProps) {
   // Get produk untuk dropdown
-  const produk = await prisma.produk.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      nama: true,
-      kode: true,
-    },
-    orderBy: { nama: "asc" },
-  })
+  const produk = await getProdukActive();
 
   // Get bahan baku untuk dropdown
-  const bahanBaku = await prisma.bahanBaku.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      nama: true,
-      satuan: true,
-      hargaBeli: true,
-      stok: true,
-    },
-    orderBy: { nama: "asc" },
-  })
+  const bahanBaku = await getBahanBakuActive({stok: true})
 
   return (
     <div className="space-y-6">

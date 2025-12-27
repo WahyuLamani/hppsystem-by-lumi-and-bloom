@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { resepWithDetailsSchema, type ResepWithDetailsFormValues } from "@/lib/validations/resep"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { z } from "zod"
 import { Decimal } from "@prisma/client/runtime/library"
 
@@ -101,6 +101,7 @@ async function updateProdukHPP(produkId: string) {
  * Get all resep
  */
 export async function getResep() {
+  noStore()
   try {
     const resep = await prisma.resep.findMany({
       include: {
@@ -137,6 +138,7 @@ export async function getResep() {
  * Get resep by ID
  */
 export async function getResepById(id: string) {
+  noStore();
   try {
     const resep = await prisma.resep.findUnique({
       where: { id },
@@ -166,6 +168,7 @@ export async function getResepById(id: string) {
  * Get resep by produk ID
  */
 export async function getResepByProdukId(produkId: string) {
+  noStore()
   try {
     const resep = await prisma.resep.findMany({
       where: { produkId },

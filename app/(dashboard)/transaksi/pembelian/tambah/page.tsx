@@ -3,35 +3,17 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PembelianForm } from "@/components/forms/pembelian-form"
 import { generatePembelianCode } from "@/app/actions/pembelian"
-import { prisma } from "@/lib/prisma"
-import { unstable_noStore as noStore } from "next/cache"
+import { getBahanBakuActive } from "@/app/actions/bahan-baku"
+import { getSupplierActive } from "@/app/actions/supplier"
 
 export default async function TambahPembelianPage() {
-  noStore();
   const nomorPo = await generatePembelianCode()
 
   // Get suppliers
-  const suppliers = await prisma.supplier.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      nama: true,
-      kode: true,
-    },
-    orderBy: { nama: "asc" },
-  })
+  const suppliers = await getSupplierActive();
 
   // Get bahan baku
-  const bahanBaku = await prisma.bahanBaku.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      nama: true,
-      satuan: true,
-      hargaBeli: true,
-    },
-    orderBy: { nama: "asc" },
-  })
+  const bahanBaku = await getBahanBakuActive()
 
   return (
     <div className="space-y-6">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BahanBakuForm } from "@/components/forms/bahan-baku-form"
 import { getBahanBakuById } from "@/app/actions/bahan-baku"
 import { prisma } from "@/lib/prisma"
+import { getSupplierActive } from "@/app/actions/supplier"
 
 interface EditBahanBakuPageProps {
   params: {
@@ -21,15 +22,7 @@ export default async function EditBahanBakuPage({ params }: EditBahanBakuPagePro
   }
 
   // Get suppliers untuk dropdown
-  const suppliers = await prisma.supplier.findMany({
-    where: { status: "active" },
-    select: {
-      id: true,
-      nama: true,
-      kode: true,
-    },
-    orderBy: { nama: "asc" },
-  })
+  const suppliers = await getSupplierActive();
 
   return (
     <div className="space-y-6">

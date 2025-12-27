@@ -2,14 +2,16 @@
 
 import { prisma } from "@/lib/prisma"
 import { bahanBakuSchema, type BahanBakuFormValues } from "@/lib/validations/bahan-baku"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { generateCode } from "@/lib/format"
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
 
 /**
  * Get all bahan baku
  */
 export async function getBahanBaku() {
+  noStore()
   try {
     const bahanBaku = await prisma.bahanBaku.findMany({
       include: {
@@ -34,6 +36,7 @@ export async function getBahanBaku() {
  * Get bahan baku by ID
  */
 export async function getBahanBakuById(id: string) {
+  noStore()
   try {
     const bahanBaku = await prisma.bahanBaku.findUnique({
       where: { id },
@@ -82,6 +85,26 @@ export async function getBahanBakuById(id: string) {
     return { success: false, error: "Gagal mengambil data bahan baku" }
   }
 }
+/**
+ * Get semua bahan baku yang aktif
+ */
+export async function getBahanBakuActive(
+  select? : Prisma.BahanBakuSelect
+) {
+  noStore()
+    return await prisma.bahanBaku.findMany({
+      where: { status: "active" },
+    select: {
+      id: true,
+      nama: true,
+      satuan: true,
+      hargaBeli: true,
+      ...select,
+    },
+    orderBy: { nama: "asc" },
+  })
+}
+
 
 /**
  * Generate kode bahan baku otomatis

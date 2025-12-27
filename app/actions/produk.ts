@@ -2,14 +2,16 @@
 
 import { prisma } from "@/lib/prisma"
 import { produkSchema, type ProdukFormValues } from "@/lib/validations/produk"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { generateCode } from "@/lib/format"
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
 
 /**
  * Get all produk
  */
 export async function getProduk() {
+  noStore()
   try {
     const produk = await prisma.produk.findMany({
       include: {
@@ -31,6 +33,7 @@ export async function getProduk() {
  * Get produk by ID
  */
 export async function getProdukById(id: string) {
+  noStore();
   try {
     const produk = await prisma.produk.findUnique({
       where: { id },
@@ -71,6 +74,25 @@ export async function getProdukById(id: string) {
     console.error("Error fetching produk:", error)
     return { success: false, error: "Gagal mengambil data produk" }
   }
+}
+
+/**
+ * Get Produk Active
+ */
+export async function getProdukActive(
+  select?: Prisma.ProdukSelect
+) {
+  noStore();
+  return await prisma.produk.findMany({
+    where: { status: "active" },
+    select: {
+      id: true,
+      nama: true,
+      kode: true,
+      ...select,
+    },
+    orderBy: { createdAt: "desc" },
+  })
 }
 
 /**

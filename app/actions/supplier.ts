@@ -5,6 +5,7 @@ import { supplierSchema, type SupplierFormValues } from "@/lib/validations/suppl
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { generateCode } from "@/lib/format"
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
 
 /**
  * Get all suppliers
@@ -61,6 +62,26 @@ export async function getSupplierById(id: string) {
     return { success: false, error: "Gagal mengambil data supplier" }
   }
 }
+
+/**
+ * Get supplier yang aktif
+ */
+export async function getSupplierActive(
+  select?: Prisma.SupplierSelect
+) {
+  noStore();
+  return await prisma.supplier.findMany({
+    where: { status: "active" },
+    select: {
+      id: true,
+      nama: true,
+      kode: true,
+      ...select,
+    },
+    orderBy: { nama: "asc" },
+  })
+}
+
 
 /**
  * Generate kode supplier otomatis

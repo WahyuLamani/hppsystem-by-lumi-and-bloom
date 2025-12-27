@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { pembelianWithDetailsSchema, type PembelianWithDetailsFormValues } from "@/lib/validations/pembelian"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { generateCode } from "@/lib/format"
 import { z } from "zod"
 
@@ -10,6 +10,7 @@ import { z } from "zod"
  * Get all pembelian
  */
 export async function getPembelian() {
+  noStore()
   try {
     const pembelian = await prisma.transaksiPembelian.findMany({
       include: {
@@ -44,6 +45,7 @@ export async function getPembelian() {
  * Get pembelian by ID
  */
 export async function getPembelianById(id: string) {
+  noStore()
   try {
     const pembelian = await prisma.transaksiPembelian.findUnique({
       where: { id },
